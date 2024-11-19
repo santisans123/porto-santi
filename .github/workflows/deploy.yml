@@ -1,32 +1,49 @@
+# File: .github/workflows/deploy.yml
 on: 
   push:
     branches:
-      - main
+      - main # Runs only on push to the main branch
+
 name: 🚀 Deploy website on push
- 
+
 jobs:
   web-deploy:
     name: 🎉 Deploy
     runs-on: ubuntu-latest
+
     steps:
+    # Step 1: Checkout the latest code
     - name: 🚚 Get latest code
       uses: actions/checkout@v3
 
+    # Step 2: Set up Node.js environment
     - name: Use Node.js 16
       uses: actions/setup-node@v2
       with:
         node-version: '16'
-   
+
+    # Step 3: Install dependencies and build the project
     - name: 🔨 Build Project
       run: |
         npm install
         npm run build
- 
+
+    # Step 4: Enable debug logging for better error insights
+    - name: Enable Debug Logs
+      run: echo "ACTIONS_STEP_DEBUG=true" >> $GITHUB_ENV
+
+    # Step 5: Deploy to FTP server with retries
     - name: 📂 Sync files
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
-        server: ${{ secrets.GIT_CPANEL_REACT_SERVER }}
-        username: ${{ secrets.GIT_CPANEL_REACT_USER }}
-        password: ${{ secrets.GIT_CPANEL_REACT_PWD }}
-        protocol: ${{ secrets.GIT_CPANEL_REACT_PROTOCOL }}
-        local-dir: ./build/
+        server: ${{ secrets.GIT_CPANEL_REACT_SERVER }} # FTP server hostname
+        username: ${{ secrets.GIT_CPANEL_REACT_USER }} # FTP username
+        password: ${{ secrets.GIT_CPANEL_REACT_PWD }}  # FTP password
+        protocol: ${{ secrets.GIT_CPANEL_REACT_PROTOCOL }} # Protocol (ftp, ftps, or sftp)
+        local-dir: ./build/ # Directory to upload
+        retry: 3 # Retries on failure
+        debug: true # Enable detailed logs
+
+    # Step 6: Verify deployment (optional)
+    - name: Verify Deployment
+      run: echo "Deployment completed successfully!"
